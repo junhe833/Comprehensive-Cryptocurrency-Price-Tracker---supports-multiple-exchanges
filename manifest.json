@@ -1,0 +1,23 @@
+{
+  "manifest_version": 2,
+ "short_name": "Check on different exchanges",
+  "name": "Crypto Checker",
+  "description": "Check prices on multiple different exchanges. Shows notifications when prices goes below/above your set price.",
+  "version": "1.0.0",
+
+  "browser_action": {
+    "default_icon": {
+		"16": "images/icon16.png",          
+        "48": "images/icon48.png",          
+        "128": "images/icon128.png"
+	},
+    "default_popup": "popup.html"
+  },
+	"background": {
+        "persistent": true,
+        "scripts": ["js/ccxt.browser.js", "background.js"]
+    },
+  "permissions": [
+    "storage"
+  ]
+}

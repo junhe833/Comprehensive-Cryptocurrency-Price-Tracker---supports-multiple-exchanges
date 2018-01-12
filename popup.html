@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<!--	<script src="popup.js"></script> -->
+			<script src="js/ccxt.browser.js"></script>
+			<script src="background.js"></script>
+			<link rel="stylesheet" href="popup.css" type="text/css"/>
+		</head>
+		<body>  
+
+			<div class="iconDisplay">
+				<label id="iconLabel">*** from *** Exchange market</label>
+				<img id="iconImage">Img</img>
+			</div>
+
+			<div class="options">
+				<table>
+					<tr>
+						<th>Region</th>
+						<th>Exchange Markets</th>
+						<th>Cryptocurrency</th>
+					</tr>
+					<tr>
+						<td><select id="selectRegion" name="Region" multiple="multiple"></select></td>
+						<td><select id="selectExchangeMarkets" name="Region" multiple="multiple"></select></td>
+						<td><select id="selectCryptocurrency" name="Region" multiple="multiple"></select></td>
+					</tr>
+				</table>
+			</div>
+
+			<div class="tableOfContent">
+
+			</div>
+
+		</body>
+	</html>
