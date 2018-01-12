@@ -1,5 +1,5 @@
 # Comprehensive-Cryptocurrency-Price-Tracker---supports-97-exchanges
-This is a comprehensive cryptocurrency price tracker supporting up to 97 cryptocurrency exchanges.
+This is a comprehensive cryptocurrency price tracker supporting up to 97 cryptocurrency exchange markets.
 
 The features of this app are as follows:
 1) Extension Icon Display: displays the price of a selected cryptocurrency from any particular exchange
