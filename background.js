@@ -3,38 +3,64 @@ window.addEventListener("load", function load() {
 	chrome.storage.sync.get("", function (data) {
 
 	});
+	
+	 var localStorage = window.localStorage;
 	 */
+	
+	var selectedRegionSet = new Set();
+	var selectedExchangeMarkets = document.getElementById("selectExchangeMarkets");
+	var selectCryptocurrency = document.getElementById("selectCryptocurrency");
 
-	var localStorage = window.localStorage;
-	var selectRegion = document.getElementById("selectRegion");
-	var selectExchangeMarkets = document.getElementById("selectExchangeMarkets")
-		var selectCryptocurrency = document.getElementById("selectCryptocurrency");
 
 	var exchangeMarkets = {};
-
-	console.log(ccxt);
-
-	//localStorage.setItem('exchanges',ccxt.exchanges);
-
-	initialize();
+	
+	initializeSelectRegion(selectedRegionSet);
 
 }, false);
 
-var initialize = function () {
-	//initialize map
-	var exchanges = ccxt.exchanges;
-	for (let i = 0; i < exchanges.length; i++) {
+var initializeSelectRegion = function (selectedRegionSet) {
+	//populate it first with region
+	addDropdown(document.getElementById("selectRegion"), Object.keys(countries).sort());
 
-		//console.log(exchanges[i]+':[\''+(new ccxt[exchanges[i]]).countries + '\']');
+	//add event for list of exchange markets
+	document.getElementById("selectRegion").addEventListener('change', function (event) {
+		let regionsChanged = selectHandler(event, selectedRegionSet);
+		console.log(regionsChanged);
 
+		for (let country in regionsChanged) {
+			if (regionsChanged[country] == "added") {
+				console.log('adding', countries[country]);
+				addDropdown(document.getElementById("selectExchangeMarkets"), countries[country]);
+			} else {
+				console.log('removing', countries[country]);
+				removeDropDown(document.getElementById("selectExchangeMarkets"), selectedRegionSet, countries[country]);
+			}
+		}
+	});
+}
+
+var selectHandler = function (event, setToBeSaved) {
+	let listChanged = {};
+	let options = event.target.options;
+	for (var i = 0, n = options.length; i < n; ++i) {
+		let val = options[i].value;
+		if (options[i].selected) {
+
+			if (!setToBeSaved.has(val)) {
+				listChanged[val] = 'added';
+			}
+			setToBeSaved.add(val);
+		} else if (setToBeSaved.has(val)) {
+			setToBeSaved.delete(val);
+			listChanged[val] = 'removed';
+		}
 	}
-
+	return listChanged;
 }
 
 var fetchCurrency = async function fetCurrency(market) {
 	return market.fetchCurrencies();
 }
-
 var fetchCurrencies = async function fetchCurrencies(selectedMarkets) {
 	for (let i = 0; i < selectedMarkets.length; i++) {
 		try {
@@ -56,8 +82,42 @@ var fetchCurrencies = async function fetchCurrencies(selectedMarkets) {
 	return
 }
 
-function populateDropdown(selectElement, dataList) {
+function addDropdown(selectElement, dataList) {
+	console.log(dataList);
 	for (let i = 0; i < dataList.length; i++) {
-		selectElement.add(new Option(dataList[i], dataList[i]));
+		let val = dataList[i];
+		if (!selectElement.options.namedItem(val)) {
+			let opt = new Option(val, val);
+			opt.id = val;
+			selectElement.add(opt);
+			console.log('adding new option:', opt);
+		}
 	}
+}
+
+function removeDropDown(selectElement, selectedRegionSet, dataList) {
+	console.log('removedropdown');
+	for (let i = 0; i < dataList.length; i++) {
+		let val = dataList[i];
+		let opt = selectElement.querySelector("#" + val);
+
+		
+		let exchangesArray = ccxt.exchanges[val];
+		console.log(exchangesArray, selectedRegionSet, isUniqueSet(selectedRegionSet, exchangesArray));
+	
+	
+		if (selectElement.contains(opt) && isUniqueSet(selectedRegionSet, exchangesArray)) {
+			selectElement.removeChild(opt);
+			console.log('removing option:', opt);
+		}
+	}
+}
+
+function isUniqueSet(selectedRegionSet, exchangesArray) {
+	for (let k = 0; k < exchangesArray.length; k++) {
+		if (selectedRegionSet.has(exchangesArray[k])) {
+			return false;
+		}
+	}
+	return true;
 }
