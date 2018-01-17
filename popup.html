@@ -6,7 +6,7 @@
 			<script src="js/ccxt.browser.js"></script>
 			<script src="data.js"></script>
 			<script src="background.js"></script>
-			
+
 			<link rel="stylesheet" href="popup.css" type="text/css"/>
 		</head>
 		<body>  
@@ -21,19 +21,37 @@
 					<tr>
 						<th>Region</th>
 						<th>Exchange Markets</th>
-						<th>Cryptocurrency</th>
 					</tr>
 					<tr>
 						<td><select id="selectRegion" name="Region" multiple="multiple"></select></td>
-						<td><select id="selectExchangeMarkets" name="Region" multiple="multiple"></select></td>
-						<td><select id="selectCryptocurrency" name="Region" multiple="multiple"></select></td>
+						<td><select id="selectExchangeMarkets" name="Markets" multiple="multiple"></select></td>					
 					</tr>
 				</table>
 			</div>
 
-			<div class="tableOfContent">
+			<div class="tableOfContent" id="tableOfContent">
+<!--
+				<div id="market">
+					<h2>Market ***</h2>
+					<select id="selectCryptocurrency" multiple="multiple"></select>		
+					<div class="table-like">					
+						<div>
+							<span>Symbol</span>
+							<span>Details</span>
+							<span>Price</span>
+						</div>
+						<div id="marketData">
+							<span>five</span>
+							<span>six</span>
+							<span>seven</span>
 
+						</div>
+					</div>
+				</div>
+-->
 			</div>
 
 		</body>
 	</html>
+
+						

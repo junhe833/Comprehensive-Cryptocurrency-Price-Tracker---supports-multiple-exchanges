@@ -1,4 +1,4 @@
-var countries = {
+const countries = {
 	"US": ["_1broker", "bittrex", "btcx", "coinexchange", "coingi", "coinmarketcap", "gdax", "gemini", "itbit", "kraken", "lakebtc", "livecoin", "okcoinusd", "okex", "poloniex"],
 	"PA": ["_1btcxe", "coingi"],
 	"AU": ["acx", "btcmarkets", "coinspot", "independentreserve"],
@@ -47,8 +47,6 @@ var countries = {
 	"PK": ["urdubit"],
 	"AT": ["virwox"]
 }
-
-
 
 /*
 var initialize = async function () {	

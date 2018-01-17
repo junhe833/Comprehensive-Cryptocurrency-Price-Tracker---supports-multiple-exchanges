@@ -16,3 +16,28 @@
 
 
 
+
+.table-like {
+  display: table;
+  width: 500px;
+}
+
+.table-like div { 
+  display: table-row;
+}
+
+.table-like div span { 
+  display: table-cell;
+}
+
+/* add borders 
+.table-like,
+.table-like div span {
+  border: 1px solid black;  
+}
+*/
+
+/* bold on 1st row */
+.table-like div:nth-child(1) {
+  font-weight: bold;
+}
