@@ -14,8 +14,9 @@
     visibility: visible;
 }
 
-
-
+table {
+    text-align:center; 
+ }
 
 .table-like {
   display: table;

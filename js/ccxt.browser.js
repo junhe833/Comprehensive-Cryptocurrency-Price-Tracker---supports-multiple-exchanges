@@ -27001,7 +27001,7 @@ module.exports = class poloniex extends Exchange {
             'high': parseFloat (ticker['high24hr']),
             'low': parseFloat (ticker['low24hr']),
             'bid': parseFloat (ticker['highestBid']),
-            'ask': parseFloat (ticker['lowestAsk']),
+            'ask': parseFloat (ticker['ask']),
             'vwap': undefined,
             'open': undefined,
             'close': undefined,
@@ -27017,7 +27017,6 @@ module.exports = class poloniex extends Exchange {
     }
 
     async fetchTickers (symbols = undefined, params = {}) {
-		console.log(this);
         await this.loadMarkets ();
         let tickers = await this.publicGetReturnTicker (params);
 		
@@ -27082,7 +27081,6 @@ module.exports = class poloniex extends Exchange {
     }
 
     async fetchTicker (symbol, params = {}) {
-		console.log(this);
         await this.loadMarkets ();
         let market = this.market (symbol);
         let tickers = await this.publicGetReturnTicker (params);
