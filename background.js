@@ -104,9 +104,8 @@ var initializeSelectRegion = function () {
 				let dataList = countries[country];
 				for (let i = 0; i < dataList.length; i++) {
 					let val = dataList[i];
-					let selectElement = event.target;
-					let opt = selectElement.querySelector("#" + val);
-
+					let selectElement = document.getElementById("selectExchangeMarkets");
+					let opt = selectElement.querySelector("#" + val);				
 					let exchangesArray = ccxt.exchanges[val];
 					if (selectElement.contains(opt) && isUniqueSet(selectedRegionSet, exchangesArray)) {
 						selectElement.removeChild(opt);
