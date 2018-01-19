@@ -1,4 +1,4 @@
-# Comprehensive-Cryptocurrency-Price-Tracker---supports-97-exchanges
+# Comprehensive-Cryptocurrency-Price-Tracker---supports multiple exchanges
 (Under development)
 
 
