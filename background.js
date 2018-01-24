@@ -8,18 +8,20 @@ chrome.extension.onConnect.addListener(function (port) {
 		console.log("message recieved " + msg);
 
 		let obj = JSON.parse(msg);
-	
+
 		let market = obj['market'];
 		let symbol = obj['currency'];
+		let rate = obj['rate'];
+
 		if (!exchangeMarkets[market]) {
 			exchangeMarkets[market] = new ccxt[market];
 		}
-		iconTicker(market, symbol);
+		iconTicker(market, symbol, rate);
 	});
 
 });
 
-function iconTicker(market, symbol) {
+function iconTicker(market, symbol, rate) {
 	clearInterval(iconInterval);
 	iconInterval = window.setInterval(async function () {
 			try {
@@ -27,13 +29,13 @@ function iconTicker(market, symbol) {
 				chrome.browserAction.setBadgeText({
 					text: data.last ? iconDisplayFormat(data.last, iconPrecision) : 'n/a'
 				});
-				console.log('Icon request=', market, ' is 1 request every ', exchangeMarkets[market]['rateLimit'] * 2 / 1000, ' sec.');
+				console.log('Icon request for ', market, ' is 1 request every ', rate / 1000, ' sec.');
 
 			} catch (error) {
 				console.log(error);
 				alert(error);
 				clearInterval(iconInterval);
 			}
-		}, exchangeMarkets[market]['rateLimit'] * 2, market);
+		}, rate, market);
 
 }

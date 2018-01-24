@@ -27,19 +27,28 @@ window.addEventListener("load", function load() {
 				currencies = await(exchangeMarkets[market]).fetchTickers();
 				exchangeMarkets[market]['currency'] = currencies;
 			}
-			addDropdown(document.getElementById("iconCryptoList"), Object.keys(currencies));
+			addDropdown(document.getElementById("iconCryptoList"), Object.keys(currencies));	
+		
+			let range = document.getElementById('iconCryptoRange');	
+			range.min = exchangeMarkets[market]['rateLimit']*2;
+			range.max = exchangeMarkets[market]['rateLimit']*20;
+		
 		} catch (error) {
 			alert(error);
 		}
 	});
-
+	
+	 $('#iconCryptoRange').on('input change', function () {
+        $('#rangeText').text( $(this).val()/1000+" seconds");
+    });
+	
 	//save icon setting
 	$("#iconConfirm").on('click', function (event) {
 		let symbol = $('#iconCryptoList option:selected').text();
 		let market = $('#iconMarketList option:selected').text();
 		let allCurrencies = Object.keys(exchangeMarkets[market]['currency']);
+		let rate = $('#iconCryptoRange').val();
 		if (symbol && market) {
-
 			window.localStorage.setItem(
 				"ExtensionIcon", JSON.stringify({
 					"market": market,
@@ -49,7 +58,8 @@ window.addEventListener("load", function load() {
 
 			port.postMessage(JSON.stringify({
 					"market": market,
-					"currency": symbol
+					"currency": symbol,
+					"rate": rate
 				}));
 
 		}
@@ -60,6 +70,9 @@ window.addEventListener("load", function load() {
 
 }, false);
 
+
+	
+	
 function updateDataTable(market, tickerData) {
 	if (!$("table[id='" + market + "']")) {
 		//console.log('updateDataTable', market, " does not exist");
