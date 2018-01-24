@@ -13,10 +13,11 @@
   },
 	"background": {
         "persistent": true,
-        "scripts": ["js/ccxt.browser.js", "data.js", "background.js", "popup.js"]
+        "scripts": ["js/ccxt.browser.js", "js/numberFormat.js", "data.js", "background.js"]
     },
   "permissions": [
     "storage",   "http://*/*",
-    "https://*/*"
+    "https://*/*",
+	"activeTab"
   ]
 }
