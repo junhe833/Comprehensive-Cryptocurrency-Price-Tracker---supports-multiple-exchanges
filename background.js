@@ -4,24 +4,68 @@ var selectCryptocurrency = new Set();
 var exchangeMarkets = {};
 
 var marketInterval = {};
+var iconInterval = null;
+const iconPrecision = 4;
 
 window.addEventListener("load", function load() {
-	/*
-	chrome.storage.sync.get("", function (data) {
+	//setup tabs
+	$("#tabs").tabs();
 
+	//Icon
+	addDropdown(document.getElementById("iconMarketList"), Object.keys(ccxt.exchanges));
+	$("#iconMarketList").on('change', async function (event) {
+		$("#iconCryptoList").empty();
+		let market = event.currentTarget.value;
+		console.log(market);
+		let currencies = null;
+		if (exchangeMarkets[market]) {
+			currencies = exchangeMarkets[market]['currency'];
+		} else {
+			exchangeMarkets[market] = new ccxt[market];
+			currencies = await(exchangeMarkets[market]).fetchTickers();
+			exchangeMarkets[market]['currency'] = currencies;
+		}
+		addDropdown(document.getElementById("iconCryptoList"), Object.keys(currencies));
 	});
 
-	var localStorage = window.localStorage;
-	 */
+	//save icon setting
+	$("#iconConfirm").on('click', function (event) {
+		let symbol = $('#iconCryptoList option:selected').text();
+		let market = $('#iconMarketList option:selected').text();
+		let allCurrencies = Object.keys(exchangeMarkets[market]['currency']);
+		if (symbol && market) {
+			//save
+			window.localStorage.setItem(
+				"ExtensionIcon", JSON.stringify({
+					"market": market,
+					"allCurrencies": allCurrencies,
+					"currency": symbol
+				})
+			);
 
+			//clear and start a ticker
+			clearInterval(iconInterval);
+			iconInterval = window.setInterval(async function () {
+					if (!exchangeMarkets[market]) {
+						exchangeMarkets[market] = new ccxt[market];
+					}
+					try{
+						let data = await(exchangeMarkets[market]).fetchTicker(symbol);
+						chrome.browserAction.setBadgeText({text: data.last ? iconDisplayFormat(data.last, iconPrecision) : 'n/a'});				
+						console.log('Icon request=', market, ' is 1 request every ', exchangeMarkets[market]['rateLimit']*2 / 1000, ' sec.');
+							
+					}catch(error){
+						alert(error);
+						clearInterval(iconInterval);
+					}
+				}, exchangeMarkets[market]['rateLimit'] * 2, market);
+
+		}
+	});
+
+	//Ticker Chart
 	initializeSelectRegion();
-	/*
-	var exchanges = ccxt.exchanges;
-	console.log(exchanges);
 
-	for (let market in exchanges) {
-		console.log('For',market, '1 request every ', (new ccxt[market])['rateLimit']/1000, ' seconds.');
-	}*/
 }, false);
 
 function updateDataTable(market, tickerData) {
@@ -43,9 +87,9 @@ function updateDataTable(market, tickerData) {
 						data: "name",
 						title: "Symbol"
 					}, {
-						data:"last",
+						data: "last",
 						title: "Last"
-					},{
+					}, {
 						data: "high",
 						title: "High"
 					}, {
@@ -65,18 +109,18 @@ function updateDataTable(market, tickerData) {
 		if (tickerData.hasOwnProperty(ticker)) {
 			let data = tickerData[ticker];
 
-			let last = data.last?data.last:'not supported';
-			let high = data.high? data.high:'not supported';
-			let low = data.low? data.low:'not supported';
-			let name = data.symbol ? data.symbol :'not supported';
-			let percent = data.percentage ? data.percentage:'not supported';
+			let last = data.last ? data.last : 'not supported';
+			let high = data.high ? data.high : 'not supported';
+			let low = data.low ? data.low : 'not supported';
+			let name = data.symbol ? data.symbol : 'not supported';
+			let percent = data.percentage ? data.percentage : 'not supported';
 
 			let opt = sel.querySelector("option[value='" + name + "']");
 
 			if (opt.selected) {
 				list.push({
 					"name": name,
-					"last":last,
+					"last": last,
 					"high": high,
 					"low": low,
 					"percent": percent
@@ -94,7 +138,7 @@ var initializeSelectRegion = function () {
 	document.getElementById("selectRegion").addEventListener('change', function (event) {
 		let regionsChanged = selectHandler(event, selectedRegionSet);
 		//console.log(regionsChanged);
-		
+
 		for (let country in regionsChanged) {
 			if (regionsChanged[country] == "added") {
 				//console.log('adding', countries[country]);
@@ -105,7 +149,7 @@ var initializeSelectRegion = function () {
 				for (let i = 0; i < dataList.length; i++) {
 					let val = dataList[i];
 					let selectElement = document.getElementById("selectExchangeMarkets");
-					let opt = selectElement.querySelector("#" + val);				
+					let opt = selectElement.querySelector("#" + val);
 					let exchangesArray = ccxt.exchanges[val];
 					if (selectElement.contains(opt) && isUniqueSet(selectedRegionSet, exchangesArray)) {
 						selectElement.removeChild(opt);
@@ -140,12 +184,18 @@ var initializeSelectRegion = function () {
 							if (!exchangeMarkets[market]) {
 								exchangeMarkets[market] = new ccxt[market];
 							}
+							try{
 							let cur = await(exchangeMarkets[market]).fetchTickers();
-							console.log('Request interval for market=',market,' is 1 request every ', exchangeMarkets[market]['rateLimit']/1000,' sec.');
+							console.log('Chart request interval for market=', market, ' is 1 request every ', exchangeMarkets[market]['rateLimit']*10 / 1000, ' sec.');
 							exchangeMarkets[market]['currency'] = cur;
 							updateDataTable(market, cur);
-						}, exchangeMarkets[market]['rateLimit']*10, market);
-						
+							}catch(error){
+								alert(error);
+								clearInterval(marketInterval[market]);
+								marketInterval[market] = null;
+							}
+						}, exchangeMarkets[market]['rateLimit'] * 10, market);
+
 					updateDataTable(market, currencies);
 
 				} else {
@@ -155,7 +205,7 @@ var initializeSelectRegion = function () {
 						marketDiv.style.display = "none";
 						let intervalID = marketInterval[market];
 						clearInterval(intervalID);
-
+						marketInterval[market] = null;
 					}
 				}
 
@@ -212,11 +262,12 @@ var fetchMarketsCurrencies = async function fetchMarketsCurrencies(selectedMarke
 function addDropdown(selectElement, dataList) {
 	for (let i = 0; i < dataList.length; i++) {
 		let val = dataList[i];
-		if (!selectElement.options.namedItem(val)) {
+		if (selectElement.options == undefined || !selectElement.options.namedItem(val)) {
 			let opt = new Option(val, val);
 			opt.id = val;
-			selectElement.add(opt);
+			selectElement.appendChild(opt);
 		}
+
 	}
 }
 
@@ -285,9 +336,9 @@ function createTickerContentDiv(parentElement, market, tickerData, filterOject =
 	}
 
 	//add a eventlistener to control each coin display
-	sel.addEventListener('change', function (event) {	
+	sel.addEventListener('change', function (event) {
 		let market = event.target.parentElement.id.replace("Div", "");
-		console.log('select change callback with market=', market);	
+		console.log('select change callback with market=', market);
 		updateDataTable(market, exchangeMarkets[market]['currency']);
 	});
 
