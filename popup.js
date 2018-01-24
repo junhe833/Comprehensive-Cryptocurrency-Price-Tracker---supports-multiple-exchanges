@@ -1,11 +1,9 @@
 var selectedRegionSet = new Set();
 var selectedExchangeMarketSet = new Set();
-var selectCryptocurrency = new Set();
-var exchangeMarkets = {};
 
+var exchangeMarkets = {};
 var marketInterval = {};
 var iconInterval = null;
-
 var port = chrome.extension.connect({
 		name: "Icon Display"
 	});
