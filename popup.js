@@ -6,30 +6,33 @@ var exchangeMarkets = {};
 var marketInterval = {};
 var iconInterval = null;
 
-
 var port = chrome.extension.connect({
-    name: "Icon Display"
-});
+		name: "Icon Display"
+	});
 
-window.addEventListener("load", function load() {	
+window.addEventListener("load", function load() {
 	//setup tabs
 	$("#tabs").tabs();
 
 	//Icon
 	addDropdown(document.getElementById("iconMarketList"), Object.keys(ccxt.exchanges));
 	$("#iconMarketList").on('change', async function (event) {
-		$("#iconCryptoList").empty();
-		let market = event.currentTarget.value;
-		console.log(market);
-		let currencies = null;
-		if (exchangeMarkets[market]) {
-			currencies = exchangeMarkets[market]['currency'];
-		} else {
-			exchangeMarkets[market] = new ccxt[market];
-			currencies = await(exchangeMarkets[market]).fetchTickers();
-			exchangeMarkets[market]['currency'] = currencies;
+		try {
+			$("#iconCryptoList").empty();
+			let market = event.currentTarget.value;
+			console.log(market);
+			let currencies = null;
+			if (exchangeMarkets[market]) {
+				currencies = exchangeMarkets[market]['currency'];
+			} else {
+				exchangeMarkets[market] = new ccxt[market];
+				currencies = await(exchangeMarkets[market]).fetchTickers();
+				exchangeMarkets[market]['currency'] = currencies;
+			}
+			addDropdown(document.getElementById("iconCryptoList"), Object.keys(currencies));
+		} catch (error) {
+			alert(error);
 		}
-		addDropdown(document.getElementById("iconCryptoList"), Object.keys(currencies));
 	});
 
 	//save icon setting
@@ -38,15 +41,14 @@ window.addEventListener("load", function load() {
 		let market = $('#iconMarketList option:selected').text();
 		let allCurrencies = Object.keys(exchangeMarkets[market]['currency']);
 		if (symbol && market) {
-			
+
 			window.localStorage.setItem(
 				"ExtensionIcon", JSON.stringify({
 					"market": market,
 					"allCurrencies": allCurrencies,
 					"currency": symbol
-				})
-			);
-			
+				}));
+
 			port.postMessage(JSON.stringify({
 					"market": market,
 					"currency": symbol
@@ -176,12 +178,12 @@ var initializeSelectRegion = function () {
 							if (!exchangeMarkets[market]) {
 								exchangeMarkets[market] = new ccxt[market];
 							}
-							try{
-							let cur = await(exchangeMarkets[market]).fetchTickers();
-							console.log('Chart request interval for market=', market, ' is 1 request every ', exchangeMarkets[market]['rateLimit']*10 / 1000, ' sec.');
-							exchangeMarkets[market]['currency'] = cur;
-							updateDataTable(market, cur);
-							}catch(error){
+							try {
+								let cur = await(exchangeMarkets[market]).fetchTickers();
+								console.log('Chart request interval for market=', market, ' is 1 request every ', exchangeMarkets[market]['rateLimit'] * 10 / 1000, ' sec.');
+								exchangeMarkets[market]['currency'] = cur;
+								updateDataTable(market, cur);
+							} catch (error) {
 								alert(error);
 								clearInterval(marketInterval[market]);
 								marketInterval[market] = null;
