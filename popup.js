@@ -14,6 +14,23 @@ window.addEventListener("load", function load() {
 
 	//Icon
 	addDropdown(document.getElementById("iconMarketList"), Object.keys(ccxt.exchanges));
+	
+		let extensionData =	JSON.parse(window.localStorage.getItem("ExtensionIcon"));
+		console.log(extensionData, extensionData['allCurrencies']);
+		if(extensionData){								
+			addDropdown(document.getElementById("iconCryptoList"), extensionData['allCurrencies']);
+			
+			$("#iconMarketList").val(extensionData['market']);
+			$("#iconCryptoList").val(extensionData['currency']);
+	
+			let range = document.getElementById('iconCryptoRange');	
+			range.min = extensionData['minRate'];
+			range.max = extensionData['maxRate'];		
+			$("#iconCryptoRange").val(extensionData['rate']);
+			$("#rangeText").text(extensionData['rate']/1000 + " seconds");
+			
+		}
+				
 	$("#iconMarketList").on('change', async function (event) {
 		try {
 			$("#iconCryptoList").empty();
@@ -46,14 +63,25 @@ window.addEventListener("load", function load() {
 	$("#iconConfirm").on('click', function (event) {
 		let symbol = $('#iconCryptoList option:selected').text();
 		let market = $('#iconMarketList option:selected').text();
-		let allCurrencies = Object.keys(exchangeMarkets[market]['currency']);
-		let rate = $('#iconCryptoRange').val();
+		let allCurrencies =  []; 
+		
+		let nodeList = document.querySelectorAll("#iconCryptoList > option");
+		for(let i=0;i<nodeList.length;i++){
+			allCurrencies.push(nodeList[i].value);
+		}
+		console.log(allCurrencies);
+		
+		let rangeElement = document.getElementById("iconCryptoRange");
+		let rate = rangeElement.value;
 		if (symbol && market) {
 			window.localStorage.setItem(
 				"ExtensionIcon", JSON.stringify({
 					"market": market,
 					"allCurrencies": allCurrencies,
-					"currency": symbol
+					"currency": symbol,
+					"rate": rate,
+					"minRate": rangeElement.min,
+					"maxRate": rangeElement.max
 				}));
 
 			port.postMessage(JSON.stringify({
