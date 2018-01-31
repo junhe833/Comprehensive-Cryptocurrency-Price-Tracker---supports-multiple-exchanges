@@ -1,6 +1,6 @@
 # Comprehensive-Cryptocurrency-Price-Tracker---supports multiple exchanges
 
-This is a comprehensive multi-exchange cryptocurrency price tracker for chrome extension. It will be released to the chrome web store when all features are implemented and tested.
+This is a comprehensive multi-exchange crypto price tracker for chrome extension. It will be released to the chrome web store when all features are implemented and tested.
 
 The features of this app are as follows:
 1) Extension Icon Display: displays the price of a selected cryptocurrency from any particular exchange
