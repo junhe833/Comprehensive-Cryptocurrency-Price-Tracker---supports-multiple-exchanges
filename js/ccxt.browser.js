@@ -2062,6 +2062,10 @@ module.exports = class Exchange {
     fetchTickers (symbols = undefined, params = {}) {
         throw new NotSupported (this.id + ' fetchTickers not supported yet')
     }
+	
+	getHistory ( params={}){
+		throw new NotSupported (this.id + ' getHistory not supported yet')
+	}
 
     fetchFullTickers (symbols = undefined, params = {}) {
         return this.fetchTickers (symbols, params)
@@ -14326,7 +14330,7 @@ module.exports = class coinmarketcap extends Exchange {
     async fetchTickers (currency = 'USD', params = {}) {
         await this.loadMarkets ();
         let request = {
-            'limit': 10000,
+            'limit': 100,
         };
         if (currency)
             request['convert'] = currency;
@@ -27517,6 +27521,14 @@ module.exports = class poloniex extends Exchange {
         }
         return response;
     }
+	
+	async getHistory(params={}){
+		let symbol = params['currencyPair'];
+		let index = symbol.indexOf("/");
+		let currency =  symbol.substring(index+1)+ "_" + symbol.substring(0,index);
+		let response = await this.request ('returnChartData','public','GET',{currencyPair:currency, start:params['start'],end:params['end'], period:params['period']});
+		return response;
+	}
 }
 
 },{"./base/Exchange":8,"./base/errors":10}],88:[function(require,module,exports){

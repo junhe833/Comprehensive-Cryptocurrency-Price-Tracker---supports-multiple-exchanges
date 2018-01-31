@@ -4,33 +4,35 @@ var selectedExchangeMarketSet = new Set();
 var exchangeMarkets = {};
 var marketInterval = {};
 var iconInterval = null;
-var port = chrome.extension.connect({
+var myChart = null;
+
+const port = chrome.extension.connect({
 		name: "Icon Display"
 	});
 
-window.addEventListener("load", function load() {
+$(function () {
 	//setup tabs
 	$("#tabs").tabs();
 
 	//Icon
 	addDropdown(document.getElementById("iconMarketList"), Object.keys(ccxt.exchanges));
-	
-		let extensionData =	JSON.parse(window.localStorage.getItem("ExtensionIcon"));
-		console.log(extensionData, extensionData['allCurrencies']);
-		if(extensionData){								
-			addDropdown(document.getElementById("iconCryptoList"), extensionData['allCurrencies']);
-			
-			$("#iconMarketList").val(extensionData['market']);
-			$("#iconCryptoList").val(extensionData['currency']);
-	
-			let range = document.getElementById('iconCryptoRange');	
-			range.min = extensionData['minRate'];
-			range.max = extensionData['maxRate'];		
-			$("#iconCryptoRange").val(extensionData['rate']);
-			$("#rangeText").text(extensionData['rate']/1000 + " seconds");
-			
-		}
-				
+
+	let extensionData = JSON.parse(window.localStorage.getItem("ExtensionIcon"));
+
+	if (extensionData) {
+		addDropdown(document.getElementById("iconCryptoList"), extensionData['allCurrencies']);
+
+		$("#iconMarketList").val(extensionData['market']);
+		$("#iconCryptoList").val(extensionData['currency']);
+
+		let range = document.getElementById('iconCryptoRange');
+		range.min = extensionData['minRate'];
+		range.max = extensionData['maxRate'];
+		$("#iconCryptoRange").val(extensionData['rate']);
+		$("#rangeText").text(extensionData['rate'] / 1000 + " seconds");
+
+	}
+
 	$("#iconMarketList").on('change', async function (event) {
 		try {
 			$("#iconCryptoList").empty();
@@ -44,33 +46,33 @@ window.addEventListener("load", function load() {
 				currencies = await(exchangeMarkets[market]).fetchTickers();
 				exchangeMarkets[market]['currency'] = currencies;
 			}
-			addDropdown(document.getElementById("iconCryptoList"), Object.keys(currencies));	
-		
-			let range = document.getElementById('iconCryptoRange');	
-			range.min = exchangeMarkets[market]['rateLimit']*2;
-			range.max = exchangeMarkets[market]['rateLimit']*20;
-		
+			addDropdown(document.getElementById("iconCryptoList"), Object.keys(currencies));
+
+			let range = document.getElementById('iconCryptoRange');
+			range.min = exchangeMarkets[market]['rateLimit'] * 2;
+			range.max = exchangeMarkets[market]['rateLimit'] * 20;
+
 		} catch (error) {
 			alert(error);
 		}
 	});
-	
-	 $('#iconCryptoRange').on('input change', function () {
-        $('#rangeText').text( $(this).val()/1000+" seconds");
-    });
-	
+
+	$('#iconCryptoRange').on('input change', function () {
+		$('#rangeText').text($(this).val() / 1000 + " seconds");
+	});
+
 	//save icon setting
 	$("#iconConfirm").on('click', function (event) {
 		let symbol = $('#iconCryptoList option:selected').text();
 		let market = $('#iconMarketList option:selected').text();
-		let allCurrencies =  []; 
-		
+		let allCurrencies = [];
+
 		let nodeList = document.querySelectorAll("#iconCryptoList > option");
-		for(let i=0;i<nodeList.length;i++){
+		for (let i = 0; i < nodeList.length; i++) {
 			allCurrencies.push(nodeList[i].value);
 		}
 		console.log(allCurrencies);
-		
+
 		let rangeElement = document.getElementById("iconCryptoRange");
 		let rate = rangeElement.value;
 		if (symbol && market) {
@@ -96,26 +98,187 @@ window.addEventListener("load", function load() {
 	//Ticker Chart
 	initializeSelectRegion();
 
-}, false);
+	//Historical Prices
+	addDropdown(document.getElementById("exchangeGraph"), Object.keys(exchangeHistory));
 
+	$("#exchangeGraph").on('change', async function (event) {
+		try {
+			$("#cryptoGraph").empty();
+			let market = event.currentTarget.value;
+			console.log(market);
+			let currencies = null;
+			if (exchangeMarkets[market]) {
+				currencies = exchangeMarkets[market]['currency'];
+			} else {
+				exchangeMarkets[market] = new ccxt[market];
+				currencies = await(exchangeMarkets[market]).fetchTickers();
+				exchangeMarkets[market]['currency'] = currencies;
+			}
+			addDropdown(document.getElementById("cryptoGraph"), Object.keys(currencies));
+		} catch (error) {
+			alert(error);
+		}
+	});
 
-	
-	
+	//set max date to current
+	let dtToday = new Date();
+	let month = dtToday.getMonth() + 1;
+	let day = dtToday.getDate();
+	let year = dtToday.getFullYear();
+	if (month < 10)
+		month = '0' + month.toString();
+	if (day < 10)
+		day = '0' + day.toString();
+	let endMaxDate = year + '-' + month + '-' + day;
+	$('#endDate').attr('max', endMaxDate);
+	$('#endDate').val(endMaxDate);
+
+	let startMaxDate = year + '-' + month + '-' + (day - 1);
+	$('#startDate').attr('max', startMaxDate);
+	$('#startDate').val(startMaxDate);
+	//restrict endDate to be at least after startDate's date
+	$('#startDate').on('change', function (event) {
+		let dt = new Date(event.target.value);
+		let day = dt.getDate() + 2;
+		let month = dtToday.getMonth() + 1;
+		let year = dtToday.getFullYear();
+		if (month < 10)
+			month = '0' + month.toString();
+		if (day < 10)
+			day = '0' + day.toString();
+		$('#endDate').attr('min', year + '-' + month + '-' + day);
+	});
+	$('#endDate').on('change', function (event) {
+		let dt = new Date(event.target.value);
+		let day = dt.getDate();
+		let month = dtToday.getMonth() + 1;
+		let year = dtToday.getFullYear();
+		if (month < 10)
+			month = '0' + month.toString();
+		if (day < 10)
+			day = '0' + day.toString();
+		$('#startDate').attr('max', year + '-' + month + '-' + day);
+	});
+	//for requesting graph
+	$('#graphConfirm').on("click", async function () {
+		let endDate = $('#endDate').val();
+		let startDate = $('#startDate').val();
+		let market = $("#exchangeGraph option:selected").val();
+		if (!market) {
+			alert("Please choose a market");
+		}
+		if (endDate && startDate) {
+			let end = new Date(endDate);
+			let start = new Date(startDate);
+			if (end >= start) {
+				let endEpoch = (end.getTime() - end.getMilliseconds()) / 1000;
+				let startEpoch = (start.getTime() - start.getMilliseconds()) / 1000;
+				let period = $("#selectTick option:selected").val();
+
+				let selectedMarket = $("#exchangeGraph option:selected").text();
+				let selecetedCoin = $('#cryptoGraph option:selected').text();
+				let val = $('#selectTick option:selected').text();
+				console.log(selectedMarket, selecetedCoin, period);
+
+				let response = await(new ccxt[selectedMarket]).getHistory({
+						currencyPair: selecetedCoin,
+						start: startEpoch,
+						end: endEpoch,
+						period: period
+					});
+
+				let graphTitle = selecetedCoin + ' for ' + selectedMarket;
+				let yLabel = selecetedCoin + " (Price)";
+				let xLabel = "Time (" + startDate + " to " + endDate + ", " + val + " interval)";
+				let price = [];
+
+				let candlestickPeriod = $("#selectTick option:selected").val();
+				let labels = [];
+				let prevDateObj = moment(startDate);
+				for (var i = 1; i < response.length; i++) {
+					price.push(response[i]['high']);
+					prevDateObj = moment(prevDateObj).add(candlestickPeriod / 60, 'm').format('MM/DD/YYYY h:mm a');
+					labels.push(prevDateObj);
+				}
+
+				var data = {
+					type: 'line',
+					data: {
+						labels: labels,
+						datasets: [{
+								label: "price",
+								backgroundColor: 'rgba(255, 99, 132, 0.2)',
+								borderColor: 'rgba(255, 99, 132, 0.2)',
+								fill: false,
+								data: price
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						title: {
+							display: true,
+							text: graphTitle
+						},
+						legend: {
+							display: false
+						},
+						pan: {
+							enabled: false
+						},
+						zoom: {
+							enabled: false
+						},
+						scales: {
+							yAxes: [{
+									scaleLabel: {
+										display: true,
+										labelString: yLabel
+									}
+								}
+							],
+							xAxes: [{
+
+									scaleLabel: {
+										display: true,
+										labelString: xLabel
+									}
+								}
+							]
+						}
+					}
+
+				}
+
+				if (myChart == null) {
+					myChart = new Chart(document.getElementById("myChart").getContext("2d"), data);
+				} else {
+					myChart.destroy();
+					myChart = new Chart(document.getElementById("myChart").getContext("2d"), data);
+				}
+
+			} else {
+				alert("Start Date must be after end date");
+			}
+		} else {
+			alert("Invalid dates.");
+		}
+	});
+
+});
+
 function updateDataTable(market, tickerData) {
 	if (!$("table[id='" + market + "']")) {
-		//console.log('updateDataTable', market, " does not exist");
 		return;
 	}
 
 	let marketDiv = document.getElementById(market + "Div");
 	marketDiv.style.display = "initial";
-	let sel = marketDiv.querySelector("select");
 
 	let table = null;
 	if (!$.fn.DataTable.isDataTable("table[id='" + market + "']")) {
-		//console.log("not datatable");
 		table = $("table[id='" + market + "']").DataTable({
-				"pageLength": 100,
+				"pageLength": 10,
 				columns: [{
 						data: "name",
 						title: "Symbol"
@@ -142,23 +305,19 @@ function updateDataTable(market, tickerData) {
 		if (tickerData.hasOwnProperty(ticker)) {
 			let data = tickerData[ticker];
 
-			let last = data.last ? data.last : 'not supported';
-			let high = data.high ? data.high : 'not supported';
-			let low = data.low ? data.low : 'not supported';
-			let name = data.symbol ? data.symbol : 'not supported';
-			let percent = data.percentage ? data.percentage : 'not supported';
+			let last = data.last ? data.last : 'N/A';
+			let high = data.high ? data.high : 'N/A';
+			let low = data.low ? data.low : 'N/A';
+			let name = data.symbol ? data.symbol : 'N/A';
+			let percent = data.percentage ? data.percentage : 'N/A';
 
-			let opt = sel.querySelector("option[value='" + name + "']");
-
-			if (opt.selected) {
-				list.push({
-					"name": name,
-					"last": last,
-					"high": high,
-					"low": low,
-					"percent": percent
-				});
-			} else {}
+			list.push({
+				"name": name,
+				"last": last,
+				"high": high,
+				"low": low,
+				"percent": percent
+			});
 		}
 	}
 	$("table[id='" + market + "']").DataTable().clear().rows.add(list).draw();
@@ -209,8 +368,6 @@ var initializeSelectRegion = function () {
 						exchangeMarkets[market]['currency'] = currencies;
 					}
 
-					console.log('currencies:', market, currencies);
-
 					let moduleDiv = createTickerContentDiv(document.getElementById("tableOfContent"), market, currencies, {});
 					marketInterval[market] = window.setInterval(async function () {
 							console.log('interval:', exchangeMarkets, market);
@@ -243,7 +400,6 @@ var initializeSelectRegion = function () {
 				}
 
 			} catch (error) {
-				//console.log(error);
 				alert(error);
 			}
 		}
@@ -332,9 +488,6 @@ function createTickerContentDiv(parentElement, market, tickerData, filterOject =
 	moduleDiv.id = market + "Div";
 	let h2 = document.createElement("h2");
 	h2.innerHTML = 'Market: ' + market;
-	let sel = document.createElement("select");
-	sel.id = market + "Select";
-	sel.setAttribute("multiple", "multiple");
 	let dataDiv = document.createElement("div");
 	dataDiv.className = "table-like";
 	dataDiv.id = market + "Data";
@@ -345,38 +498,7 @@ function createTickerContentDiv(parentElement, market, tickerData, filterOject =
 	tableDiv.className = "cell-border";
 	dataDiv.appendChild(tableDiv);
 
-	let selectSet = new Set();
-
-	for (let ticker in tickerData) {
-		if (tickerData.hasOwnProperty(ticker)) {
-			let data = tickerData[ticker];
-
-			let high = data.high;
-			let low = data.low;
-			let name = data.symbol;
-			let percent = data.percentage;
-
-			let opt = new Option(name, name);
-			opt.id = name;
-			if (filterOject != null && filterOject.hasOwnProperty(name)) {
-				opt.selected = false;
-			} else {
-				opt.selected = true;
-				selectSet.add(opt);
-			}
-			sel.add(opt);
-		}
-	}
-
-	//add a eventlistener to control each coin display
-	sel.addEventListener('change', function (event) {
-		let market = event.target.parentElement.id.replace("Div", "");
-		console.log('select change callback with market=', market);
-		updateDataTable(market, exchangeMarkets[market]['currency']);
-	});
-
 	moduleDiv.appendChild(h2);
-	moduleDiv.appendChild(sel);
 	moduleDiv.appendChild(dataDiv);
 	parentElement.appendChild(moduleDiv);
 	return moduleDiv;

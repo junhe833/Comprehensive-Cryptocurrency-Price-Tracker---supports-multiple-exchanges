@@ -1,3 +1,7 @@
+const exchangeHistory = {
+	"poloniex":""
+}
+
 const countries = {
 	"US": ["_1broker", "bittrex", "btcx", "coinexchange", "coingi", "coinmarketcap", "gdax", "gemini", "itbit", "kraken", "lakebtc", "livecoin", "okcoinusd", "okex", "poloniex"],
 	"PA": ["_1btcxe", "coingi"],
